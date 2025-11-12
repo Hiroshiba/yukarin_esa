@@ -1,12 +1,11 @@
 """機械学習プロジェクトの設定モジュール"""
 
-from pathlib import Path
 from typing import Any, Self
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from hiho_pytorch_base.utility.git_utility import get_branch_name, get_commit_id
-from hiho_pytorch_base.utility.upath_utility import UPathField
+from .utility.git_utility import get_branch_name, get_commit_id
+from .utility.upath_utility import UPathField
 
 
 class _Model(BaseModel):
@@ -28,6 +27,7 @@ class DatasetConfig(_Model):
 
     train: DataFileConfig
     valid: DataFileConfig | None = None
+    train_num: int | None = None
     test_num: int
     eval_for_test: bool
     eval_times_num: int = 1
@@ -58,6 +58,7 @@ class TrainConfig(_Model):
     """学習の設定"""
 
     batch_size: int
+    gradient_accumulation: int = 1
     eval_batch_size: int
     log_epoch: int
     eval_epoch: int
@@ -67,9 +68,9 @@ class TrainConfig(_Model):
     optimizer: dict[str, Any]
     scheduler: dict[str, Any] | None = None
     weight_initializer: str | None = None
-    pretrained_predictor_path: Path | None = None
+    pretrained_predictor_path: UPathField | None = None
     prefetch_workers: int = 256
-    preprocess_workers: int = 0
+    preprocess_workers: int | None = None
     use_gpu: bool = True
     use_amp: bool = True
 

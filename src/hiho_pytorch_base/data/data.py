@@ -6,8 +6,8 @@ import numpy
 import torch
 from torch import Tensor
 
-from hiho_pytorch_base.data.phoneme import ArpaPhoneme
-from hiho_pytorch_base.data.sampling_data import ResampleInterpolateKind, SamplingData
+from .phoneme import ArpaPhoneme
+from .sampling_data import ResampleInterpolateKind, SamplingData
 
 
 @dataclass

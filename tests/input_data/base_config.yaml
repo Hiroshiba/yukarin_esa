@@ -11,6 +11,7 @@ dataset:
     lab_pathlist_path: "tests/data/test_data/valid_lab_pathlist.txt"
     speaker_dict_path: "tests/data/test_data/speaker_dict.json"
     root_dir: "tests/data/test_data"
+  train_num: null
   test_num: 16
   eval_for_test: true
   eval_times_num: 1
@@ -30,12 +31,13 @@ network:
 model: {}
 
 train:
-  batch_size: 8
+  batch_size: 4
+  gradient_accumulation: 2
   eval_batch_size: 8
-  log_epoch: 1
-  eval_epoch: 2
+  log_epoch: 2
+  eval_epoch: 4
   snapshot_epoch: 4
-  stop_epoch: 10
+  stop_epoch: 20
   model_save_num: 2
   optimizer:
     name: "RAdamScheduleFree"

@@ -51,18 +51,18 @@ def setup_data_and_config(base_config_path: Path, data_dir: UPath) -> Config:
             valid_pathlist_path.write_text("\n".join(all_relative_paths[train_num:]))
 
     # 共通のフレーム長を生成（F0とvolumeで一致させる）
-    rng = np.random.default_rng(42)  # 再現性のため
-    frame_lengths = {stem: int(rng.integers(50, 200)) for stem in all_stems}
+    rng = np.random.default_rng(42)
+    variable_lengths = {}
+    for stem in all_stems:
+        variable_lengths[stem] = int(rng.integers(50, 200))
 
     # F0データ
     def generate_f0(file_path: Path) -> None:
         stem = file_path.stem
-        f0_length = frame_lengths[stem]
-        f0_data = rng.uniform(80, 300, f0_length).astype(np.float32)  # F0値 (Hz)
-        # 一部を無声（0）にする
+        f0_length = variable_lengths[stem]
+        f0_data = rng.uniform(80, 300, f0_length).astype(np.float32)
         unvoiced_mask = rng.random(f0_length) < 0.3
         f0_data[unvoiced_mask] = 0.0
-        # SamplingDataで保存（200Hzのフレームレート）
         sampling_data = SamplingData(array=f0_data[:, np.newaxis], rate=200.0)
         sampling_data.save(file_path)
 
@@ -71,9 +71,8 @@ def setup_data_and_config(base_config_path: Path, data_dir: UPath) -> Config:
     # ボリュームデータ
     def generate_volume(file_path: Path) -> None:
         stem = file_path.stem
-        volume_length = frame_lengths[stem]  # F0と同じ長さを使用
-        volume_data = rng.uniform(-60, -20, volume_length).astype(np.float32)  # dB
-        # SamplingDataで保存（200Hzのフレームレート）
+        volume_length = variable_lengths[stem]
+        volume_data = rng.uniform(-60, -20, volume_length).astype(np.float32)
         sampling_data = SamplingData(array=volume_data[:, np.newaxis], rate=200.0)
         sampling_data.save(file_path)
 
@@ -81,12 +80,10 @@ def setup_data_and_config(base_config_path: Path, data_dir: UPath) -> Config:
 
     # LABデータ（音素情報）
     def generate_lab(file_path: Path) -> None:
-        # ArpaPhoneme形式のLABファイルを生成
-
         stem = file_path.stem
-        frame_length = frame_lengths[stem]
+        frame_length = variable_lengths[stem]
         frame_rate = 200.0
-        total_duration = frame_length / frame_rate  # F0/volumeデータの総時間
+        total_duration = frame_length / frame_rate
 
         # ランダムに音素を選択（母音と子音を混合）
         vowel_phonemes = ["AA1", "EH0", "IY2", "AE1", "OW0"]

@@ -9,7 +9,6 @@ LibriTTSデータセット対応。
 import argparse
 import tempfile
 from dataclasses import dataclass
-from pathlib import Path
 
 import gradio as gr
 import japanize_matplotlib  # noqa: F401 日本語フォントに必須
@@ -19,6 +18,7 @@ import numpy as np
 import soundfile as sf
 import yaml
 from matplotlib.figure import Figure
+from upath import UPath
 
 from hiho_pytorch_base.config import Config
 from hiho_pytorch_base.data.data import OutputData
@@ -49,7 +49,7 @@ class FigureState:
     main_plot_fig: Figure | None = None
 
 
-def get_audio_path_from_lab(lab_file_path: Path) -> Path:
+def get_audio_path_from_lab(lab_file_path: UPath) -> UPath:
     """.labファイルのパスから対応する音声ファイルのパスを取得"""
     stem = lab_file_path.stem
 
@@ -60,7 +60,7 @@ def get_audio_path_from_lab(lab_file_path: Path) -> Path:
     speaker_id = parts[0]
     chapter_id = parts[1]
 
-    libritts_root = Path("/tmp/datasets/LibriTTS_clean_data/LibriTTS")
+    libritts_root = UPath("/tmp/datasets/LibriTTS_clean_data/LibriTTS")
     audio_path = libritts_root / "dev-clean" / speaker_id / chapter_id / f"{stem}.wav"
 
     if not audio_path.exists():
@@ -69,7 +69,7 @@ def get_audio_path_from_lab(lab_file_path: Path) -> Path:
     return audio_path
 
 
-def extract_audio_segment(audio_path: Path, start_time: float, end_time: float) -> str:
+def extract_audio_segment(audio_path: UPath, start_time: float, end_time: float) -> str:
     """音声ファイルから指定時間範囲を切り出して一時ファイルとして保存"""
     try:
         audio, sr = librosa.load(str(audio_path), sr=None)
@@ -107,17 +107,16 @@ def extract_audio_segment(audio_path: Path, start_time: float, end_time: float) 
 class VisualizationApp:
     """可視化アプリケーション"""
 
-    def __init__(self, config_path: Path, initial_dataset_type: DatasetType):
+    def __init__(self, config_path: UPath, initial_dataset_type: DatasetType):
         self.config_path = config_path
         self.initial_dataset_type = initial_dataset_type
 
-        self.dataset_collection = self._load_dataset()
+        self.dataset_collection = self._create_dataset()
         self.figure_state = FigureState()
 
-    def _load_dataset(self) -> DatasetCollection:
-        """データセットを読み込み"""
-        with self.config_path.open() as f:
-            config = Config.from_dict(yaml.safe_load(f))
+    def _create_dataset(self) -> DatasetCollection:
+        """データセットを作成"""
+        config = Config.from_dict(yaml.safe_load(self.config_path.read_text()))
         return create_dataset(config.dataset)
 
     def _get_dataset_and_data(
@@ -580,17 +579,15 @@ Volumeデータ shape: {tuple(output_data.volume.shape)}
         demo.launch(share=False, server_name="0.0.0.0", server_port=7860)
 
 
-def visualize(config_path: Path, dataset_type: DatasetType) -> None:
+def visualize(config_path: UPath, dataset_type: DatasetType) -> None:
     """指定されたデータセットをGradio UIで可視化する"""
     app = VisualizationApp(config_path, dataset_type)
     app.launch()
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="F0予測データセットのビジュアライゼーション"
-    )
-    parser.add_argument("config_path", type=Path, help="設定ファイルのパス")
+    parser = argparse.ArgumentParser(description="データセットのビジュアライゼーション")
+    parser.add_argument("config_path", type=UPath, help="設定ファイルのパス")
     parser.add_argument(
         "--dataset_type",
         type=DatasetType,
